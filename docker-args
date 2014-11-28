@@ -10,7 +10,18 @@ output=""
 if [[ -f "$LINK_FILE_PATH" ]]; then
   while read line
   do
-    output="$output --link $line"
+    IFS=':' read -ra LINK <<< $line
+    NAME_ORIG=${LINK[0]}
+    RESULT="$(exec docker ps | grep -i $NAME_ORIG)"
+    RESULT_ARR=($RESULT)
+    RESULT_ARR_LENGTH=${#RESULT_ARR[@]}
+    LAST_POS=$((RESULT_ARR_LENGTH - 1))
+    NAME=${RESULT_ARR[${LAST_POS}]}
+    if (( ${#LINK[@]} > 1 )); then
+      output="$output --link $NAME:${LINK[1]}"
+    else
+      output="$output --link $NAME:$NAME_ORIG"
+    fi
   done < $LINK_FILE_PATH
 fi
 echo "$STDIN$output"
